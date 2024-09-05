@@ -65,12 +65,14 @@ async def load_input(
         case InputType.file:
             log.info("using file storage for input")
             storage = FilePipelineStorage(
-                root_dir=str(Path(root_dir) / (config.base_dir or ""))
+                root_dir=str(Path(root_dir) / (config.base_dir or "")),
+                encoding="utf-8"
             )
         case _:
             log.info("using file storage for input")
             storage = FilePipelineStorage(
-                root_dir=str(Path(root_dir) / (config.base_dir or ""))
+                root_dir=str(Path(root_dir) / (config.base_dir or "")),
+                encoding="utf-8"
             )
 
     if config.file_type in loaders:
