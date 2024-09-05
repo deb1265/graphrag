@@ -29,10 +29,10 @@ class FilePipelineStorage(PipelineStorage):
     _root_dir: str
     _encoding: str
 
-    def __init__(self, root_dir: str | None = None, encoding: str | None = None):
+    def __init__(self, root_dir: str | None = None, encoding: str = "utf-8"):
         """Init method definition."""
         self._root_dir = root_dir or ""
-        self._encoding = encoding or "utf-8"
+        self._encoding = encoding
         Path(self._root_dir).mkdir(parents=True, exist_ok=True)
 
     def find(
@@ -77,29 +77,28 @@ class FilePipelineStorage(PipelineStorage):
                 progress(_create_progress_status(num_loaded, num_filtered, num_total))
 
     async def get(
-        self, key: str, as_bytes: bool | None = False, encoding: str | None = None
+        self, key: str, as_bytes: bool = False
     ) -> Any:
         """Get method definition."""
         file_path = join_path(self._root_dir, key)
 
         if await self.has(key):
-            return await self._read_file(file_path, as_bytes, encoding)
+            return await self._read_file(file_path, as_bytes)
         if await exists(key):
-            # Lookup for key, as it is pressumably a new file loaded from inputs
+            # Lookup for key, as it is presumably a new file loaded from inputs
             # and not yet written to storage
-            return await self._read_file(key, as_bytes, encoding)
+            return await self._read_file(key, as_bytes)
 
         return None
 
     async def _read_file(
         self,
         path: str | Path,
-        as_bytes: bool | None = False,
-        encoding: str | None = None,
+        as_bytes: bool = False,
     ) -> Any:
         """Read the contents of a file."""
         read_type = "rb" if as_bytes else "r"
-        encoding = None if as_bytes else (encoding or self._encoding)
+        encoding = None if as_bytes else self._encoding
 
         async with aiofiles.open(
             path,
@@ -108,11 +107,11 @@ class FilePipelineStorage(PipelineStorage):
         ) as f:
             return await f.read()
 
-    async def set(self, key: str, value: Any, encoding: str | None = None) -> None:
+    async def set(self, key: str, value: Any) -> None:
         """Set method definition."""
         is_bytes = isinstance(value, bytes)
         write_type = "wb" if is_bytes else "w"
-        encoding = None if is_bytes else encoding or self._encoding
+        encoding = None if is_bytes else self._encoding
         async with aiofiles.open(
             join_path(self._root_dir, key),
             cast(Any, write_type),
